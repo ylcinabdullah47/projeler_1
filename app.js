@@ -284,49 +284,116 @@
 
 
 
+// const express = require('express');
+// const mongoose = require('mongoose');
+// const server =  express();
+
+// //mongodb bağlantıs
+// mongoose.connect('mongodb://127.0.0.1:27017/oyun',{ useNewUrlParser: true });
+
+// //skor şeması 
+//  const scoreSchema =new mongoose.Schema({   
+//     name:String,
+//     score:Number
+//  });
+
+//  //skor modeli  
+//  const score=mongoose.model('skor',scoreSchema);
+
+//  //yeni skor eklemek için post isteği
+
+//  server.post('/scores',(req,res)=>{
+//     const {name,score}= req.body;
+
+//     // Yeni bir skor oluştur
+//   const newScore = new Score({ name, score });
+
+//   // Skoru kaydet
+//    newScore.save();
+
+//   // Başarılı yanıt gönder
+//   res.send('Skor başarıyla eklendi.');
+  
+//  });
+
+// // // Yeni bir skor oluştur
+// // const newScore = new Score({ name: 'Oyuncu Adı', score: 100 });
+
+// // // Skoru kaydet
+// // newScore.insertOne();
+
+
+// server.get('/tablo',(req,res)=>{
+//     res.send("tablo sayfasına hoşgeldin")
+// })
+
+// server.listen(3000,(req,res)=>{
+//     console.log("3000 portu çalışıyor");
+// })
+
+
+
+console.log("test1");
+
 const express = require('express');
 const mongoose = require('mongoose');
-const server =  express();
+const app = express();
+app.use(express.json())
+//mongodb Bağlantı kodları
+mongoose.connect('mongodb://127.0.0.1:27017/oyun', { useNewUrlParser: true })
+.then(()=>console.log("bağlantı başarılı"))
+.catch(err => console.log(err));
 
-//mongodb bağlantıs
-mongoose.connect('mongodb://127.0.0.1:27017/oyun',{ useNewUrlParser: true });
+//veri tabanı için oluşturduğumuz şema
+const gameScoreSchema  =new mongoose.Schema({
+    ad:String,
+    skor:Number,
+    date:{type:Date,default:Date.now}
+});
 
-//skor şeması 
- const scoreSchema =new mongoose.Schema({   
-    name:String,
-    score:Number
- });
-
- //skor modeli  
- const score=mongoose.model('Score',scoreSchema);
-
- //yeni skor eklemek için post isteği
-
- server.post('/scores',(req,res)=>{
-    const {name,score}= req.body;
-
-    // Yeni bir skor oluştur
-  const newScore = new Score({ name, score });
-
-  // Skoru kaydet
-   newScore.save();
-
-  // Başarılı yanıt gönder
-  res.send('Skor başarıyla eklendi.');
-  
- });
-
-// // Yeni bir skor oluştur
-// const newScore = new Score({ name: 'Oyuncu Adı', score: 100 });
-
-// // Skoru kaydet
-// newScore.insertOne();
+const GameScore  = mongoose.model('GameScore' ,gameScoreSchema);
 
 
-server.get('/tablo',(req,res)=>{
-    res.send("tablo sayfasına hoşgeldin")
+app.post('/skor47',async(req,res)=>{
+    try {
+        const {ad,skor}=req.body;
+        //oyun skorunu veri tabanına kayıt etme
+        const gameScore = new GameScore({ad,skor});
+        await gameScore.save();
+        res.status(201).json({success:true});
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({success:false})
+    }
+    const gameScore = await GameScore.create({ ad: 'mehmet', skor: 25 });
+});
+
+
+// bu method mongodb için kullanılan method 
+// mongoose.connection.insertOne({ad:"mehmet",skor:25,},function(err,result){
+//     if(err) throw err;
+//     console.log("başarılı kayıt oldu");
+//     result.close();
+
+// });
+
+// burada veri tabanına kayıt edilen bütün verileri listeliyoruz
+app.get('/skor',async(req,res)=>{
+    const gameScore =await GameScore.find();
+    res.json(gameScore);
+    
+});
+
+
+app.post('/skor',async(req,res)=>{
+    const{ad,skor}=req.body;
+    const gameScore=await GameScore.create({ad,skor});
+    res.json(gameScore);
 })
 
-server.listen(3000,(req,res)=>{
+
+
+app.listen(3000,()=>{
     console.log("3000 portu çalışıyor");
 })
