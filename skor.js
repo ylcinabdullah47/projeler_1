@@ -1,9 +1,9 @@
-const mongoose=require('mongoose');
+// const mongoose=require('mongoose');
 
-const SkorSchema = new mongoose.Schema({
-    ad:String,
-    skor:Number
-});
+// const SkorSchema = new mongoose.Schema({
+//     ad:String,
+//     skor:Number
+// });
 
-const Skor = mongoose.model('skor',SkorSchema);
-module.exports=Skor;
+// const Skor = mongoose.model('skor',SkorSchema);
+// module.exports=Skor;

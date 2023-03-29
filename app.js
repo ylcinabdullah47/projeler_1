@@ -334,15 +334,14 @@
 
 
 console.log("test1");
-
+const { json } = require('express');
 const express = require('express');
 const { ObjectId } = require('mongodb');
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-
-
 const app = express();
 app.use(express.json())
+app.set('trust proxy', true);//api adresinin tam olarak gözükmesi için 
 //mongodb Bağlantı kodları
 mongoose.connect('mongodb://127.0.0.1:27017/oyun', { useNewUrlParser: true })
 .then(()=>console.log("bağlantı başarılı"))
@@ -350,27 +349,36 @@ mongoose.connect('mongodb://127.0.0.1:27017/oyun', { useNewUrlParser: true })
 
 //veri tabanı için oluşturduğumuz şema
 const gameScoreSchema  =new mongoose.Schema({
-    ad:String,
-    skor:Number,
-    date:{type:Date,default:Date.now}
+    Nickname:String,
+    Score:Number,
+    ip:String,
+    Date:{type:Date,default:Date.now}
 });
 
-const GameScore  = mongoose.model('GameScore' ,gameScoreSchema);
+const GameScore  = mongoose.model('GameScore1' ,gameScoreSchema);
 
 
-app.post('/skor47',async(req,res)=>{
+//oyundan gelen skorları dizinin içine push layacağzı
+let skorlar=[];
+
+app.post('/skor',async(req,res)=>{
     try {
-        const {ad,skor}=req.body;
+        const {Nickname,Score}=req.body;
+        // const ip = req.connection.remoteAddress;
+        // const ip =req.ip;
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
         //oyun skorunu veri tabanına kayıt etme
-        const gameScore = new GameScore({ad,skor});
+        const gameScore = new GameScore({Nickname,Score,ip});
         await gameScore.save();
-        res.status(201).json({success:true});
+        res.status(201).json({message:`${Nickname} skor: ${Score} başarılı kayıt oldu ${ip}`,success:true});
 
     } catch (err) {
         console.error(err);
         res.status(500).json({success:false})
     }
-    const gameScore = await GameScore.create({ ad: 'mehmet', skor: 25 });
+    // const gameScore = await GameScore.create({ Nickname: 'yeni veri tabanı', Score: 25 ,});
+    
 });
 
 
@@ -387,17 +395,38 @@ app.get('/skor',async(req,res)=>{
     const gameScore =await GameScore.find();
     res.json(gameScore);
     
+    
+});
+//id ye göre güncelleme
+app.put('/skor/:id',async(req,res)=>{
+const {id} =req.params;
+const {Nickname,Score}=req.body;
+try {
+    const result = await GameScore.findByIdAndUpdate(id, { Nickname,Score });
+    res.json(result);
+} catch (error) {
+    console.error(error);
+    res.status(500).json({error:'güncelleme hatası'})
+}
 });
 
-
 app.post('/skor',async(req,res)=>{
-    const{ad,skor}=req.body;
-    const gameScore=await GameScore.create({ad,skor});
+    const{nickname,skor}=req.body;
+    const gameScore=await GameScore.create({nickname,skor});
     res.json(gameScore);
 });
 
-
-
+app.delete('/skor/:id',async(req,res)=>{
+    const {id} =req.params;
+    // const {nickname,skor}=req.body;
+    try {
+        const result = await GameScore.findByIdAndDelete(id);
+        res.json(result);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({error:'güncelleme hatası'})
+    } 
+});
 //BURASI TEST BÖLÜMÜ
 
 app.get('/test',(req,res)=>{
