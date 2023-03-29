@@ -336,7 +336,11 @@
 console.log("test1");
 
 const express = require('express');
+const { ObjectId } = require('mongodb');
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+
 const app = express();
 app.use(express.json())
 //mongodb Bağlantı kodları
@@ -390,7 +394,53 @@ app.post('/skor',async(req,res)=>{
     const{ad,skor}=req.body;
     const gameScore=await GameScore.create({ad,skor});
     res.json(gameScore);
-})
+});
+
+
+
+//BURASI TEST BÖLÜMÜ
+
+app.get('/test',(req,res)=>{
+res.status(200).json({message:'burası get methodu'})
+
+});
+app.post('/test',(req,res)=>{
+res.status(200).json({message:'burası post methodu'})
+const {ad,skor,id}=req.body;
+const gameScore=GameScore.create({ad,skor,id});
+
+});
+app.put('/test/:id',(req,res)=>{
+// res.status(200).json(req.params.id)
+res.status(200).json({message:`burası put methodu ${req.params.id}`});
+
+});
+app.delete('/test/:id',(req,res)=>{
+// res.status(200).json(req.params.id)
+// db.collection.deleteOne({_id:ObjectId(req.params.ids)})
+// GameScore.deleteOne({_id:ObjectId(req.params.id)},function(err,result){
+//     if(err){
+//         console.log(err);
+//         res.status(500).send('silme işlemi yapılırken hata oluştu');
+//     }else{
+//         res.status(200).send(`${result.deletedCount} silme işlemi başarılı`)
+//     }
+// });
+const id = req.params.id;
+GameScore.deleteOne(id, (err, doc) => {
+  if (err) {
+    console.log(err);
+    res.status(500).send(err);
+  } else if (!doc) {
+    res.status(404).send('Not found');
+  } else {
+    res.send(doc);
+  }
+});
+});
+
+
+// });
 
 
 
