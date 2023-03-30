@@ -349,29 +349,46 @@ mongoose.connect('mongodb://127.0.0.1:27017/oyun', { useNewUrlParser: true })
 
 //veri tabanı için oluşturduğumuz şema
 const gameScoreSchema  =new mongoose.Schema({
-    Nickname:String,
+    Nickname:{
+         type:String, 
+         unique: true, // nickname alanı benzersiz olmalıdır
+         required: true
+    },
     Score:Number,
     ip:String,
     Date:{type:Date,default:Date.now}
 });
 
-const GameScore  = mongoose.model('GameScore1' ,gameScoreSchema);
+const GameScore  = mongoose.model('GameScore2' ,gameScoreSchema);
 
 
 //oyundan gelen skorları dizinin içine push layacağzı
-let skorlar=[];
+// let skorlar=[];
 
 app.post('/skor',async(req,res)=>{
     try {
-        const {Nickname,Score}=req.body;
+        const {Score}=req.body;
+        const{Nickname}=req.body;
         // const ip = req.connection.remoteAddress;
         // const ip =req.ip;
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        //nickname kontrol yapılan yer
+        const player =await GameScore.findOne({Nickname,Score,ip});
+        if (player) {
+            return res.status(409).json({message:'Bu isim zaten kullanılıyor. Lütfen başka bir isim seçin.' })   
+        }
+        else{
+            const newPlayer= new GameScore({Nickname,Score,ip});
 
+            // const newPlayer= new Player({Nickname});
+            await newPlayer.save();
+            return res.status(201).json({message:'kayıt başarılı'});
+
+        }
         //oyun skorunu veri tabanına kayıt etme
-        const gameScore = new GameScore({Nickname,Score,ip});
-        await gameScore.save();
-        res.status(201).json({message:`${Nickname} skor: ${Score} başarılı kayıt oldu ${ip}`,success:true});
+        // const gameScore = new GameScore({Nickname,Score,ip});
+        // await gameScore.save();
+        // res.status(201).json({message:`${Nickname} skor: ${Score} başarılı kayıt oldu ${ip}`,success:true});
 
     } catch (err) {
         console.error(err);
